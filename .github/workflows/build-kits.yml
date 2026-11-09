@@ -1,0 +1,42 @@
+name: Build the free kit pack
+
+# Run once from the Actions tab. Downloads the free drum libraries, mixes the
+# multi-mic recordings down to ready-to-load Hammer kits and publishes
+# TheHammer-Kits.zip as a GitHub Release ("kits-v1").
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  kits:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install audio tools
+        run: pip install numpy soundfile
+      - name: Build kits
+        run: python kits/build_kits.py --src sources --out TheHammer-Kits
+      - name: Zip
+        run: |
+          rm -rf sources
+          zip -r -q TheHammer-Kits.zip TheHammer-Kits
+          ls -lh TheHammer-Kits.zip
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: kits-v1
+          name: The Hammer - Free Kit Pack
+          body: |
+            Real drum kits for The Hammer. Unzip and copy the folders into
+            Documents/APT Industrial/The Hammer/Kits - The Hammer finds them automatically
+            (Auto Kit picks the right one for each style).
+            DRS Kit, DRS Kit Brushes, Muldjord Metal Kit (CC BY 4.0, DrumGizmo),
+            Big Rusty Drums (CC0, Karoryfer), VSCO Orchestral Percussion and VCSL Cajon (CC0, Versilian Studios).
+          files: TheHammer-Kits.zip

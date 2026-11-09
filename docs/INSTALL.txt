@@ -1,0 +1,26 @@
+THE HAMMER by APT Industrial - installing on Windows / FL Studio
+=================================================================
+
+1. Copy these three folders into  C:\Program Files\Common Files\VST3
+      The Hammer.vst3        (drummer instrument - Channel Rack)
+      The Hammer FX.vst3     (drummer as a mixer insert)
+      The Hammer Ears.vst3   (listener for the drummer instrument)
+
+2. FL Studio: Options > Manage plugins > Find plugins (tick "Verify plugins").
+   Star them so they show up in the plugin browser.
+
+3. Kits (optional but recommended): download TheHammer-Kits.zip from the
+   GitHub Releases page and unzip the folders into
+      Documents\APT Industrial\The Hammer\Kits
+   The Hammer loads them automatically. The built-in modeled kits work without them.
+
+QUICK SETUP (Drummer + Ears)
+  * Channel Rack: add "The Hammer" and send it to a free mixer track.
+  * Mixer: put "The Hammer Ears" on a track/bus carrying your song WITHOUT drums.
+  * Same LINK CHANNEL on both. Press play. EARS LED = green.
+
+QUICK SETUP (one plugin)
+  * Mixer: put "The Hammer FX" on the track/bus carrying your song. Press play.
+
+"The Hammer.exe" is a standalone version (press PLAY in its header).
+Open the ROAD CREW tab inside the plugin for the full guide and MIDI keys.

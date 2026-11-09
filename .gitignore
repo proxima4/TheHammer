@@ -1,0 +1,12 @@
+build/
+build-*/
+JUCE/
+sources/
+TheHammer-Kits/
+*.zip
+__pycache__/
+training/groove-v1.0.0-midionly.zip
+preview/
+playbook_data/
+.DS_Store
+.vs/

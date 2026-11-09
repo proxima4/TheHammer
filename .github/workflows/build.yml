@@ -1,0 +1,73 @@
+name: Build The Hammer
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    name: Windows VST3 + Standalone
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure (downloads JUCE 8)
+        run: cmake -B build -G "Visual Studio 17 2022" -A x64 -DHAMMER_BUILD_TOOLS=ON
+
+      - name: Build (Release)
+        run: cmake --build build --config Release --parallel
+
+      - name: Self-test the engine
+        run: build\HammerRender_artefacts\Release\HammerRender.exe --selftest
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item -Recurse "build/TheHammer_artefacts/Release/VST3/The Hammer.vst3" dist/
+          Copy-Item -Recurse "build/TheHammerFX_artefacts/Release/VST3/The Hammer FX.vst3" dist/
+          Copy-Item -Recurse "build/TheHammerEars_artefacts/Release/VST3/The Hammer Ears.vst3" dist/
+          Copy-Item "build/TheHammer_artefacts/Release/Standalone/The Hammer.exe" dist/
+          Copy-Item docs/INSTALL.txt dist/
+          Copy-Item CREDITS.md dist/
+          Compress-Archive -Path dist/* -DestinationPath TheHammer-Windows.zip -Force
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TheHammer-Windows
+          path: dist
+
+      - name: Publish release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: TheHammer-Windows.zip
+
+  linux-test:
+    name: Linux build + demo renders
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libasound2-dev libx11-dev libxrandr-dev libxinerama-dev \
+            libxcursor-dev libxcomposite-dev libxext-dev libfreetype-dev libfontconfig1-dev libgl1-mesa-dev
+      - name: Build tool
+        run: |
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --target HammerRender
+      - name: Self-test
+        run: build/HammerRender_artefacts/Release/HammerRender --selftest
+      - name: Render demos
+        run: build/HammerRender_artefacts/Release/HammerRender --render demos
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TheHammer-demo-renders
+          path: demos

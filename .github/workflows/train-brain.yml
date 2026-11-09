@@ -1,0 +1,76 @@
+name: Train the neural brain
+
+# Run this from the Actions tab ("Run workflow"). It trains The Hammer's GRU
+# drummer on GitHub's servers from three sources:
+#   1. the Groove MIDI Dataset (real drummers - feel, timing, dynamics)
+#   2. bars exported from The Hammer's own Playbook (metal, orchestral, cajon, minimal...)
+#   3. your own grooves in training/my_midi/<style>/*.mid (weighted x4)
+# then verifies the export and commits model/hammer_brain.json, which makes
+# the Build workflow bake the trained brain into the plugins.
+# Add more MIDI to training/my_midi any time and run it again.
+
+on:
+  workflow_dispatch:
+    inputs:
+      epochs:
+        description: "Training epochs (30 is about 30-60 minutes)"
+        default: "30"
+      hidden:
+        description: "GRU size (128 recommended)"
+        default: "128"
+      playbook_scale:
+        description: "How many Playbook bars to mix in (1 = ~15,000 bars)"
+        default: "1"
+
+permissions:
+  contents: write
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PyTorch (CPU) + MIDI tools
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install numpy pretty_midi
+
+      - name: Build the Hammer tool (exports Playbook data, verifies the brain)
+        run: |
+          sudo apt-get update && sudo apt-get install -y ninja-build libasound2-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxcomposite-dev libxext-dev libfreetype-dev libfontconfig1-dev libgl1-mesa-dev
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --target HammerRender
+
+      - name: Export Playbook training bars
+        run: build/HammerRender_artefacts/Release/HammerRender --export-playbook playbook_data ${{ github.event.inputs.playbook_scale }}
+
+      - name: Train (Groove MIDI Dataset + Playbook + your MIDI)
+        run: |
+          python training/train_brain.py --epochs ${{ github.event.inputs.epochs }} \
+            --hidden ${{ github.event.inputs.hidden }} --layers 2 \
+            --playbook playbook_data --my-midi training/my_midi \
+            --out model/hammer_brain.json --preview preview --max-minutes 300
+
+      - name: Verify the C++ engine computes the same as PyTorch
+        run: build/HammerRender_artefacts/Release/HammerRender --brain model/hammer_brain.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hammer-brain
+          path: |
+            model/hammer_brain.json
+            preview
+
+      - name: Commit the trained brain
+        run: |
+          git config user.name "The Hammer trainer"
+          git config user.email "actions@users.noreply.github.com"
+          git add model/hammer_brain.json
+          git commit -m "Train neural brain on Groove MIDI Dataset (${{ github.event.inputs.epochs }} epochs)" || echo "no change"
+          git push
