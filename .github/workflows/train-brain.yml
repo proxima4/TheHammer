@@ -24,6 +24,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   train:
@@ -72,5 +73,12 @@ jobs:
           git config user.name "The Hammer trainer"
           git config user.email "actions@users.noreply.github.com"
           git add model/hammer_brain.json
-          git commit -m "Train neural brain on Groove MIDI Dataset (${{ github.event.inputs.epochs }} epochs)" || echo "no change"
+          git commit -m "Train neural brain: Groove MIDI Dataset + Playbook + my_midi (${{ github.event.inputs.epochs }} epochs)" || echo "no change"
           git push
+
+      # Commits made by the workflow robot don't start other workflows by themselves,
+      # so ask for the plugin build explicitly - it bakes the new brain into the plugins.
+      - name: Start the plugin build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run build.yml --ref main -R ${{ github.repository }}
