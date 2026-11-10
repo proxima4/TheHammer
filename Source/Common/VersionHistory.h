@@ -9,6 +9,10 @@ namespace hammer
 struct VersionEntry { const char* version; const char* date; const char* notes; };
 
 inline constexpr VersionEntry kVersionHistory[] = {
+    { "0.1.3", "2026-11-10",
+      "John Bonham techniques: single-foot kick triplets in Rock, the Bonham triplet fill (R hand tom, L hand, "
+      "kick), new 'Bonham triplet kick' groove, more laid-back rock feel. Frost / extreme metal: bomb blast in "
+      "Death Metal, mid-tempo 'Black'n'roll stomp' in Metalcore. New training tabs for both." },
     { "0.1.2", "2026-11-10",
       "The neural brain can now learn from drum tab (training/my_tabs): tabs teach which notes to play, "
       "real drummers teach the feel. Tab reader handles accents, ghosts, open hats, flams, rolls, triplets "

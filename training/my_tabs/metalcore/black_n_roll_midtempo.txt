@@ -1,0 +1,23 @@
+title: Black'n'roll mid-tempo grooves (Satyricon-era Frost style)
+style: metalcore
+tempo: 128
+
+Written for The Hammer in the spirit of Frost's later Satyricon playing:
+mid-tempo, heavy, driving 8th-note crashes and galloping double kick.
+Not a transcription.
+
+Stomp
+CC  |x-x-x-x-x-x-x-x-|
+SN  |----O-------O---|
+B   |o-ooo-o-o-ooo-o-|  x4
+
+Double-kick lift with a floor-tom push
+CC  |x---x---x---x---|
+SN  |----O-------O---|
+FT  |--------------o-|
+B   |oooooooooooooooo|  x2
+
+Half-time march
+CH  |x---x---x---x---|
+SN  |--------O-------|
+B   |o-o---o-o-oo----|  x4

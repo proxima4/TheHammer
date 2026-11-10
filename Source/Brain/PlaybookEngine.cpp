@@ -218,6 +218,22 @@ void PlaybookEngine::applyOrnaments (const BrainContext& ctx, LaneGrid& g, Rng& 
             if (t > 0 && g.prob[Kick][t] < 0.5f)
                 g.set (Kick, t, o.kickPickup * im * 0.6f, 0.6f);
     }
+    // John Bonham: single-foot 16th-triplet kick doubles leading into a beat ("ba-da-BOOM").
+    // The second note is the stronger one, pulling into the next beat.
+    if (o.kickTriplets > 0.f && ! ctx.style->tripletGrid && in > 0.3f)
+    {
+        const float pk = o.kickTriplets * (0.3f + 0.7f * im) * (0.4f + 0.6f * in);
+        for (int b = 1; b <= ctx.beatsPerBar; ++b)
+        {
+            const int beat = b * kTicksPerBeat;           // the beat being pulled into
+            const int t1 = beat - 4, t2 = beat - 2;       // 16th-triplet partials
+            if (t1 < 0 || g.prob[Snare][t1] > 0.3f || g.prob[Snare][t2] > 0.3f) continue;
+            if (! rng.chance (pk * 0.4f)) continue;
+            g.set (Kick, t1, 1.f, 0.66f);
+            g.set (Kick, t2, 1.f, 0.82f);
+        }
+    }
+
     // open hat at the end of a phrase
     if (o.openHatEnd > 0.f && lastBarOfPhrase)
     {

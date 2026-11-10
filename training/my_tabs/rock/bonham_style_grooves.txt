@@ -1,0 +1,28 @@
+title: Bonham-style grooves - single-foot kick triplets and kick doubles
+style: rock
+tempo: 94
+
+Written for The Hammer in the style of John Bonham (Led Zeppelin), after studying
+his playing on "Good Times, Bad Times" (1969). Short figures, not a transcription.
+24 characters per bar = 16th-note triplets.
+
+Triplet kick doubles into beats 2 and 4
+HH  |x..x..x..x..x..x..x..x..|
+SN  |......O...........O.....|
+B   |o...oo......o...oo......|  x4
+
+Kick doubles answering the snare
+HH  |x..x..x..x..x..x..x..x..|
+SN  |......O...........O.....|
+B   |o.....o..oo.o...oo.o..oo|  x4
+
+Running triplet kick under 8th hats (single pedal: kick-kick-hand)
+HH  |..x..x..x..x..x..x..x..x|
+SN  |......O...........O.....|
+B   |oo.oo.oo.oo.oo.oo.oo.oo.|  x2
+
+Cowbell groove with 16th kick doubles (16 per bar)
+CB  |x-xx-x-xx-xx-x-x|
+Hf  |x-x-x-x-x-x-x-x-|
+SN  |----O-------O---|
+B   |o-o---oo--o-o---|  x4

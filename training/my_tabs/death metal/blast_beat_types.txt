@@ -1,0 +1,26 @@
+title: The main blast beats - traditional, bomb, hammer, skank
+style: death metal
+tempo: 220
+
+Standard extreme-metal vocabulary (the blast-beat family played by drummers
+like Frost of 1349 / Satyricon). Ride or crash plays with the kick.
+
+Skank beat (the sped-up polka / thrash beat blasts grew from)
+Rd  |x-x-x-x-x-x-x-x-|
+SN  |--O---O---O---O-|
+B   |o---o---o---o---|  x4
+
+Traditional blast (kick and snare alternate, cymbal with the kick)
+CC  |x-x-x-x-x-x-x-x-|
+SN  |-o-o-o-o-o-o-o-o|
+B   |o-o-o-o-o-o-o-o-|  x4
+
+Bomb blast (16th kicks under an 8th-note snare)
+CC  |x-x-x-x-x-x-x-x-|
+SN  |-o-o-o-o-o-o-o-o|
+B   |oooooooooooooooo|  x4
+
+Hammer blast (kick and snare together)
+CC  |x-x-x-x-x-x-x-x-|
+SN  |o-o-o-o-o-o-o-o-|
+B   |o-o-o-o-o-o-o-o-|  x4

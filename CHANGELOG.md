@@ -2,6 +2,16 @@
 
 Every change to The Hammer is listed here and inside the plugin (Road Crew page).
 
+## 0.1.3 — 2026-11-10
+- **John Bonham's techniques** (studied from "Good Times, Bad Times" and his technique write-ups):
+  - Single-foot kick triplets: Rock now drops "ba-da-BOOM" 16th-triplet kick doubles into beats, louder on the second note to pull forward. Fast tempos thin them out, as a real single pedal would.
+  - The Bonham triplet fill: right hand tom, left hand, kick, in 16th-note triplets travelling down the toms, kick accented. Used by Rock, and a little by Indie, Blues and Metalcore.
+  - New Rock groove "Bonham triplet kick", and a slightly more laid-back rock feel.
+- **Frost (Satyricon / 1349) and extreme metal:**
+  - Death Metal gains the bomb blast (16th double kick under an 8th-note snare) between the traditional and hammer blasts.
+  - Metalcore gains a mid-tempo "Black'n'roll stomp" in the spirit of Frost's later Satyricon playing.
+- New training tabs: Bonham-style grooves and the Bonham triplet fill (rock), the blast-beat family (death metal), black'n'roll mid-tempo grooves (metalcore). Written in the style of these drummers, not copied transcriptions.
+
 ## 0.1.2 — 2026-11-10
 - **The neural brain can learn from drum tab.** Put text tabs in `training/my_tabs/<style>/`. Tabs teach which notes to play; timing feel and dynamics are learned only from real drummers, so the result stays human.
 - New tab reader (`training/tab_reader.py`) understands standard drum tab: crash, hi-hat, ride, china, splash, toms, snare, kick, cowbell, tambourine and shaker lines; accents, ghost notes, open hats, flams, drags, buzz rolls, cross-stick, ride bell; 8ths, 16ths, triplets and 32nds; "x4" repeats. It can write a MIDI file to check what it read.

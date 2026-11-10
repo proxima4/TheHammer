@@ -29,7 +29,8 @@ bool FillSoloGenerator::keepsLane (FillType type, int lane)
     {
         case FillJazzComp: return lane == Ride || lane == HatPedal || lane == RideBell;
         case FillBlast:
-        case FillKickSnare: return lane == HatPedal;
+        case FillKickSnare:
+        case FillBonhamTriplet: return lane == HatPedal;
         case FillOrchestral: return false;
         case FillMinimal: return lane == Kick || lane == HatClosed || lane == Shaker || lane == Clap;
         default: return lane == Kick || lane == HatPedal || lane == Shaker || lane == Tambourine;
@@ -182,6 +183,24 @@ void FillSoloGenerator::fill (FillType type, const FillParams& p, LaneGrid& g, R
                 put (choices[rng.below (4)], t, 0.6f + 0.3f * rng.uni());
             }
             if (in > 0.75f) for (int t = std::max (a, b - 12); t < b; t += 3) put (Snare, t, 0.4f + 0.5f * ramp (t));
+            break;
+        }
+        case FillBonhamTriplet:
+        {
+            // 16th-note triplets in groups of three: Right hand (tom) - Left hand - Kick,
+            // travelling down the kit, kick accented to pull into the next group.
+            static const int rightHand[4] = { TomHigh, TomHigh, TomMid, TomFloor };
+            static const int leftHand[4] = { Snare, TomHigh, TomMid, TomFloor };
+            const int nGroups = std::max (1, len / 6);
+            for (int gi = 0; gi < nGroups; ++gi)
+            {
+                const int t = a + gi * 6;
+                const int stage = std::min (3, (gi * 4) / nGroups);
+                const float r = ramp (t);
+                put (rightHand[stage], t, 0.7f + 0.25f * r);
+                put (leftHand[stage], t + 2, 0.6f + 0.25f * r);
+                put (Kick, t + 4, 0.85f + 0.15f * r);
+            }
             break;
         }
         case FillKickSnare:

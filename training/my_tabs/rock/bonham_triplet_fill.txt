@@ -1,0 +1,13 @@
+title: The Bonham triplet fill (right hand - left hand - kick)
+style: rock
+tempo: 94
+
+16th-note triplets in groups of three going around the kit (R hand tom, L hand,
+kick), kick accented at the end of each group. One bar of groove, then the fill.
+
+HH  |x..x..x..x..x..x..x..x..|------------------------|
+SN  |......O...........O.....|.o..o...................|
+T1  |------------------------|o..o..oo.oo.............|
+T2  |------------------------|............oo.oo.......|
+FT  |------------------------|..................oo.oo.|
+B   |o...........o...........|..O..O..O..O..O..O..O..O|

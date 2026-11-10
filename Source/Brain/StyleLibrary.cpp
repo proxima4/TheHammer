@@ -63,12 +63,13 @@ static HumanFeel feel (float jitter, float vj, float kick, float snare, float ha
 }
 
 static Ornaments orn (float ghost, float pickup, float openHat, float subdiv, float comp, float bombs,
-                      float bell, float splash, float dk, float china)
+                      float bell, float splash, float dk, float china, float kickTrip = 0.f)
 {
     Ornaments o;
     o.ghostSnare = ghost; o.kickPickup = pickup; o.openHatEnd = openHat; o.hatSubdiv = subdiv;
     o.comping = comp; o.bombs = bombs; o.rideBell = bell; o.splash = splash; o.doubleKick = dk;
     o.chinaWithAggression = china;
+    o.kickTriplets = kickTrip;
     return o;
 }
 
@@ -96,12 +97,13 @@ static const StyleDef kStyles[NumStyles] =
         { "Verse side-stick", 0.2f, 16, { { Kick, "x.......x.x....." }, { Rim, "....x.......x..." }, { HatClosed, "x.o.x.o.x.o.x.o." } } },
         { "Basic 8ths", 0.4f, 16, { { Kick, "x.......x.x....." }, { Snare, "....X.......X..." }, { HatClosed, "x.o.x.o.x.o.x.o." } } },
         { "Driving", 0.6f, 16, { { Kick, "x.....x.x.x....." }, { Snare, "....X.......X..." }, { HatClosed, "x.x.x.x.x.x.x.x." }, { HatOpen, "..............?." } } },
-        { "Chorus ride", 0.78f, 16, { { Kick, "x.....x.x.x....." }, { Snare, "....X.......X..." }, { Ride, "x.o.x.o.x.o.x.o." }, { RideBell, "x...x...x...x..." } } },
+        { "Bonham triplet kick", 0.7f, 24, { { HatClosed, "x..o..x..o..x..o..x..o.." }, { Snare, "......X...........X....." }, { Kick, "x...xx......x...xx......" } } },
+        { "Chorus ride", 0.8f, 16, { { Kick, "x.....x.x.x....." }, { Snare, "....X.......X..." }, { Ride, "x.o.x.o.x.o.x.o." }, { RideBell, "x...x...x...x..." } } },
         { "Crash-ride anthem", 0.93f, 16, { { Kick, "x.x...x.x.x...x." }, { Snare, "....X.......X..." }, { Crash, "x...x...x...x..." } } },
-      }, 5,
-      { 0.5f, 0.3f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.2f },
-      feel (4.f, 0.06f, 0.f, 3.f, -2.f, -1.f),
-      orn (0.15f, 0.35f, 0.3f, 0.3f, 0.f, 0.f, 0.f, 0.1f, 0.f, 0.f),
+      }, 6,
+      { 0.42f, 0.25f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.18f, 0.3f },
+      feel (4.f, 0.06f, 1.f, 4.f, -1.f, -1.f),
+      orn (0.15f, 0.35f, 0.3f, 0.3f, 0.f, 0.f, 0.f, 0.1f, 0.f, 0.f, 0.3f),
       70.f, 185.f,
       { 0.8f, 0, 0, 0, 0, 0, 0.2f, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
       0.8f, 0.85f },
@@ -111,11 +113,12 @@ static const StyleDef kStyles[NumStyles] =
       {
         { "Clean verse", 0.2f, 16, { { Kick, "x.....x...x....." }, { Snare, "....x.......x..." }, { HatClosed, "x.x.x.x.x.x.x.x." } } },
         { "Driving 8ths", 0.42f, 16, { { Kick, "x.x.x.x.x.x.x.x." }, { Snare, "....X.......X..." }, { Ride, "x.x.x.x.x.x.x.x." } } },
-        { "Breakdown", 0.62f, 16, { { Kick, "x..x..x.x..x...." }, { Snare, "........X......." }, { China, "x...x...x...x..." } }, true },
+        { "Black'n'roll stomp", 0.52f, 16, { { Kick, "x.xxx.x.x.xxx.x." }, { Snare, "....X.......X..." }, { Crash, "x.o.x.o.x.o.x.o." }, { TomFloor, "..............o." } } },
+        { "Breakdown", 0.64f, 16, { { Kick, "x..x..x.x..x...." }, { Snare, "........X......." }, { China, "x...x...x...x..." } }, true },
         { "Double-kick chorus", 0.8f, 16, { { Kick, "xxxxxxxxxxxxxxxx" }, { Snare, "....X.......X..." }, { Crash, "x...x...x...x..." } } },
         { "Blast", 0.96f, 16, { { Kick, "x.x.x.x.x.x.x.x." }, { Snare, ".x.x.x.x.x.x.x.x" }, { Crash, "x.x.x.x.x.x.x.x." } } },
-      }, 5,
-      { 0.35f, 0.2f, 0.f, 0.f, 0.2f, 0.f, 0.f, 0.f, 0.f, 0.25f },
+      }, 6,
+      { 0.35f, 0.2f, 0.f, 0.f, 0.2f, 0.f, 0.f, 0.f, 0.f, 0.25f, 0.1f },
       feel (2.5f, 0.04f, 0.f, 0.f, -1.f, -1.f, 0.15f),
       orn (0.f, 0.3f, 0.1f, 0.2f, 0.f, 0.f, 0.3f, 0.3f, 0.7f, 0.6f),
       70.f, 240.f,
@@ -129,8 +132,9 @@ static const StyleDef kStyles[NumStyles] =
         { "Skank beat", 0.4f, 16, { { Kick, "x...x...x...x..." }, { Snare, "..X...X...X...X." }, { Crash, "x.x.x.x.x.x.x.x." } } },
         { "Double-kick groove", 0.6f, 16, { { Kick, "xxxxxxxxxxxxxxxx" }, { Snare, "....X.......X..." }, { Ride, "x.x.x.x.x.x.x.x." } } },
         { "Traditional blast", 0.8f, 16, { { Kick, "x.x.x.x.x.x.x.x." }, { Snare, ".x.x.x.x.x.x.x.x" }, { Ride, "x.x.x.x.x.x.x.x." } } },
+        { "Bomb blast", 0.88f, 16, { { Kick, "xxxxxxxxxxxxxxxx" }, { Snare, ".x.x.x.x.x.x.x.x" }, { Crash, "x.x.x.x.x.x.x.x." } } },
         { "Hammer blast", 0.97f, 16, { { Kick, "xxxxxxxxxxxxxxxx" }, { Snare, "xoxoxoxoxoxoxoxo" }, { Crash, "x.x.x.x.x.x.x.x." } } },
-      }, 5,
+      }, 6,
       { 0.35f, 0.f, 0.f, 0.f, 0.45f, 0.f, 0.f, 0.f, 0.f, 0.2f },
       feel (2.f, 0.03f, 0.f, 0.f, 0.f, 0.f, 0.1f),
       orn (0.f, 0.2f, 0.f, 0.f, 0.f, 0.f, 0.2f, 0.2f, 0.9f, 0.7f),
@@ -147,7 +151,7 @@ static const StyleDef kStyles[NumStyles] =
         { "Tom-heavy", 0.74f, 16, { { Kick, "x..x..x...x..x.." }, { TomFloor, "x.x.x.x.x.x.x.x." }, { Snare, "....X.......X..." } } },
         { "Wall of sound", 0.92f, 16, { { Kick, "x.x.x.x.x.x.x.x." }, { Snare, "....X.......X..." }, { Crash, "x...x...x...x..." }, { Tambourine, "....x.......x..." } } },
       }, 5,
-      { 0.4f, 0.35f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.25f, 0.f },
+      { 0.4f, 0.35f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.25f, 0.f, 0.12f },
       feel (5.f, 0.08f, 1.f, 2.f, 0.f, 0.f),
       orn (0.1f, 0.2f, 0.25f, 0.2f, 0.f, 0.f, 0.f, 0.1f, 0.f, 0.f),
       75.f, 180.f,
@@ -211,7 +215,7 @@ static const StyleDef kStyles[NumStyles] =
         { "Double shuffle", 0.8f, 12, { { Kick, "x..x.ox..x.o" }, { Snare, "..gX.g..gX.g" }, { Ride, "x.ox.ox.ox.o" } } },
         { "Rocking blues", 0.93f, 12, { { Kick, "x..x..x..x.." }, { Snare, "...X.....X.." }, { Crash, "x..x..x..x.." } } },
       }, 5,
-      { 0.3f, 0.1f, 0.f, 0.6f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f },
+      { 0.3f, 0.1f, 0.f, 0.6f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.2f },
       feel (6.f, 0.08f, 1.f, 6.f, 1.f, 0.f, 0.3f),
       orn (0.3f, 0.3f, 0.f, 0.f, 0.15f, 0.1f, 0.1f, 0.05f, 0.f, 0.f),
       50.f, 170.f,

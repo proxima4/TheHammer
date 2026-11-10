@@ -25,6 +25,7 @@ enum FillType : int
 {
     FillTomRun = 0, FillSnareBuild, FillLinear, FillTriplet, FillBlast, FillJazzComp,
     FillCajon, FillOrchestral, FillMinimal, FillKickSnare,
+    FillBonhamTriplet,   // hand-hand-kick 16th triplets around the kit (John Bonham)
     NumFillTypes
 };
 
@@ -66,6 +67,7 @@ struct Ornaments
     float splash = 0.f;
     float doubleKick = 0.f;   // double-kick runs at high aggression
     float chinaWithAggression = 0.f;
+    float kickTriplets = 0.f; // single-foot 16th-triplet kick doubles into beats (John Bonham)
 };
 
 struct StyleDef
@@ -76,7 +78,7 @@ struct StyleDef
     float swing16;            // 0..1 (1 = full 16th triplet swing)
     int defaultKit;           // built-in fallback kit
     const char* kitTag;       // preferred sample-kit tag (auto kit)
-    GrooveDef grooves[5];
+    GrooveDef grooves[6];
     int numGrooves;
     float fillVocab[NumFillTypes];
     HumanFeel feel;
