@@ -16,6 +16,8 @@ Three kinds of training data:
                             styles GMD lacks (metalcore, death metal, orchestral, cajon, minimal...)
   3. my_midi/<style>/*.mid - YOUR grooves (e-kit recordings, programmed parts,
                             transcriptions you made). Weighted x4 so they really count.
+  4. my_tabs/<style>/*.txt - drum tablature (see tab_reader.py). Teaches WHICH notes to play;
+                            timing feel is learned only from real drummers.
 
 The exported JSON is read by Source/Brain/NeuralEngine.cpp. It contains
 reference input/output vectors so the C++ engine can prove it computes
@@ -32,6 +34,7 @@ Model input per 16th-note step (67 values):
 Output (27): 9 hit logits, 9 velocity pre-sigmoids, 9 micro-timing pre-tanh.
 """
 import argparse, csv, io, json, math, os, random, sys, time, urllib.request, zipfile
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import numpy as np
 
 GMD_URL = "https://storage.googleapis.com/magentadata/datasets/groove/groove-v1.0.0-midionly.zip"
@@ -54,10 +57,14 @@ N_IN, N_OUT, STEPS_PER_BAR = 27 + N_STYLE + 1 + 3 + 5 + 1, 27, 16
 # ---------------------------------------------------------------------------
 class Performance:
     """svec: 30-value style vector (18 GMD mix + 12 Hammer one-hot). fill: bool or per-step array."""
-    __slots__ = ("hits", "vel", "off", "svec", "fill", "split", "weight")
+    __slots__ = ("hits", "vel", "off", "svec", "fill", "split", "weight", "lw")
 
-    def __init__(self, hits, vel, off, svec, fill, split, weight=1):
+    # lw = how much each part of this performance teaches: (which notes, how hard, timing feel).
+    #   real drummers (GMD, your MIDI) teach all three; Playbook bars mostly notes;
+    #   drum tabs ONLY notes - their feel comes from the real drummers.
+    def __init__(self, hits, vel, off, svec, fill, split, weight=1, lw=(1.0, 1.0, 1.0)):
         self.hits, self.vel, self.off, self.svec, self.fill, self.split, self.weight = hits, vel, off, svec, fill, split, weight
+        self.lw = lw
 
 
 def style_vector(gmd_index=-1, hammer_index=-1, gmd_mix=None):
@@ -184,7 +191,7 @@ def load_playbook(folder, rng):
                     if vel > v[t, cls]:
                         h[t, cls] = 1; v[t, cls] = vel; o[t, cls] = off
             split = "validation" if rng.random() < 0.06 else "train"
-            perfs.append(Performance(h, v, o, svec, fill, split))
+            perfs.append(Performance(h, v, o, svec, fill, split, lw=(1.0, 0.6, 0.35)))
     print(f"  playbook: {len(perfs)} sessions from {folder}")
     return perfs, mixes
 
@@ -263,6 +270,57 @@ def load_user_midi(folder, mixes, rng, weight=4):
     return perfs
 
 
+def load_tabs(folder, mixes, rng, weight=3):
+    """my_tabs/<style>/*.txt - drum tablature. Teaches WHICH notes to play; the feel (micro-timing,
+    exact dynamics) is left to the real drummers, so tab bars carry no timing lesson."""
+    import tab_reader
+    perfs = []
+    if not folder or not os.path.isdir(folder):
+        return perfs
+    for sub in sorted(os.listdir(folder)):
+        d = os.path.join(folder, sub)
+        if not os.path.isdir(d):
+            continue
+        n = 0
+        for f in sorted(os.listdir(d)):
+            if not f.lower().endswith((".txt", ".tab")):
+                continue
+            with open(os.path.join(d, f), encoding="utf-8", errors="replace") as fh:
+                parsed = tab_reader.parse_tab(fh.read())
+            hs = hammer_style_from_name(parsed["style"]) if parsed["style"] else -1
+            if hs < 0:
+                hs = hammer_style_from_name(sub)
+            if hs < 0 or not parsed["bars"]:
+                print(f"  my_tabs: {sub}/{f} skipped (no style or no bars)")
+                continue
+            cmap = STYLE_MAPS.get(hs, DEFAULT_MAP)
+            T = len(parsed["bars"]) * STEPS_PER_BAR
+            h = np.zeros((T, 9), np.float32); v = np.zeros((T, 9), np.float32); o = np.zeros((T, 9), np.float32)
+            for b, events in enumerate(parsed["bars"]):
+                for pos, lane, vel in events:
+                    c = cmap.get(TAB_TO_TRAIN_LANE.get(lane, lane))
+                    st = int(round(pos))
+                    if c is None or st >= STEPS_PER_BAR:
+                        continue
+                    t = b * STEPS_PER_BAR + st
+                    if vel > v[t, c]:
+                        h[t, c] = 1; v[t, c] = vel; o[t, c] = pos - st   # triplets keep their swing offset
+            svec = style_vector(hammer_index=hs, gmd_mix=mixes.get(hs))
+            perfs.append(Performance(h, v, o, svec, "fill" in f.lower(), "train", weight, lw=(1.0, 0.3, 0.0)))
+            n += 1
+            for w in parsed["warnings"][:3]:
+                print(f"    {f}: {w}")
+        if n:
+            print(f"  my_tabs/{sub}: {n} tab files -> {HAMMER_STYLES[hs]}")
+    return perfs
+
+
+# tab_reader lane names -> the names used by the style maps above
+TAB_TO_TRAIN_LANE = {"hhc": "hhc", "hhp": "hhp", "hho": "hho", "high": "high", "mid": "mid", "floor": "floor",
+                     "crash": "crash", "china": "china", "splash": "splash", "ride": "ride", "bell": "bell",
+                     "snare": "snare", "rim": "rim", "kick": "kick", "cowbell": "cowbell", "tamb": "tamb", "shaker": "shaker"}
+
+
 def make_inputs(p, start, length, rng, train=True):
     """Builds (length, 55) inputs and (length, 27) targets for a window of a performance."""
     T = p.hits.shape[0]
@@ -280,6 +338,10 @@ def make_inputs(p, start, length, rng, train=True):
     prev_v = np.concatenate([[p.vel[start - 1] if start > 0 else np.zeros(9)], vel[:-1]])
     prev_o = np.concatenate([[p.off[start - 1] if start > 0 else np.zeros(9)], off[:-1]])
     prev[:, 0:9], prev[:, 9:18], prev[:, 18:27] = prev_h, prev_v, prev_o
+    if train and p.lw[2] < 0.5:
+        # tabs/playbook are (nearly) on the grid; at playback the brain hears its own human feel
+        prev[:, 9:18] = np.clip(prev[:, 9:18] * rng.uniform(0.85, 1.15, (length, 9)), 0, 1) * prev[:, 0:9]
+        prev[:, 18:27] = np.clip(prev[:, 18:27] + rng.normal(0, 0.06, (length, 9)), -0.5, 0.5) * prev[:, 0:9]
 
     sv = p.svec.copy()
     if train and rng.random() < 0.1:
@@ -317,7 +379,7 @@ def make_inputs(p, start, length, rng, train=True):
     x = np.concatenate([prev, style, dens[:, None], listen, posf, fill], 1).astype(np.float32)
     y = np.concatenate([hits, vel, off], 1).astype(np.float32)
     m = valid.astype(np.float32)
-    return x, y, m
+    return x, y, m, np.asarray(p.lw, np.float32)
 
 
 def windows(perfs, split, length, hop):
@@ -351,28 +413,32 @@ def build_model(hidden, layers):
     return HammerBrain()
 
 
-def loss_fn(pred, y, m, pos_weight):
+def loss_fn(pred, y, m, pos_weight, w=None):
+    """w: (batch, 3) per-sample weights for (hits, velocity, timing) - see Performance.lw."""
     import torch
     import torch.nn.functional as F
     hit_t, vel_t, off_t = y[..., 0:9], y[..., 9:18], y[..., 18:27]
+    if w is None:
+        w = torch.ones((y.shape[0], 3), dtype=y.dtype)
+    wh, wv, wo = (w[:, k].view(-1, 1, 1) for k in range(3))
     mask = m[..., None]
     bce = F.binary_cross_entropy_with_logits(pred[..., 0:9], hit_t, pos_weight=pos_weight, reduction="none")
-    bce = (bce * mask).sum() / (mask.sum() * 9 + 1e-6)
+    bce = (bce * mask * wh).sum() / ((mask * wh).sum() * 9 + 1e-6)
     hm = hit_t * mask
-    v = ((torch.sigmoid(pred[..., 9:18]) - vel_t) ** 2 * hm).sum() / (hm.sum() + 1e-6)
-    o = ((0.5 * torch.tanh(pred[..., 18:27]) - off_t) ** 2 * hm).sum() / (hm.sum() + 1e-6)
+    v = ((torch.sigmoid(pred[..., 9:18]) - vel_t) ** 2 * hm * wv).sum() / ((hm * wv).sum() + 1e-6)
+    o = ((0.5 * torch.tanh(pred[..., 18:27]) - off_t) ** 2 * hm * wo).sum() / ((hm * wo).sum() + 1e-6)
     return bce + 0.5 * v + 2.0 * o, (bce.item(), v.item(), o.item())
 
 
 def batches(perfs, wins, length, bs, rng, train):
     order = rng.permutation(len(wins)) if train else np.arange(len(wins))
     for i in range(0, len(order), bs):
-        xs, ys, ms = [], [], []
+        xs, ys, ms, ws = [], [], [], []
         for j in order[i:i + bs]:
             pi, s = wins[j]
-            x, y, m = make_inputs(perfs[pi], s, length, rng, train)
-            xs.append(x); ys.append(y); ms.append(m)
-        yield np.stack(xs), np.stack(ys), np.stack(ms)
+            x, y, m, w = make_inputs(perfs[pi], s, length, rng, train)
+            xs.append(x); ys.append(y); ms.append(m); ws.append(w)
+        yield np.stack(xs), np.stack(ys), np.stack(ms), np.stack(ws)
 
 
 # ---------------------------------------------------------------------------
@@ -475,6 +541,8 @@ def main():
     ap.add_argument("--playbook", default=None, help="folder from `HammerRender --export-playbook`")
     ap.add_argument("--my-midi", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "my_midi"),
                     help="folder of <style>/*.mid with your own grooves")
+    ap.add_argument("--my-tabs", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "my_tabs"),
+                    help="folder of <style>/*.txt drum tabs (teach note choice; feel comes from real drummers)")
     ap.add_argument("--no-gmd", action="store_true", help="skip the Groove MIDI Dataset (fine-tuning experiments)")
     ap.add_argument("--epochs", type=int, default=30)
     ap.add_argument("--hidden", type=int, default=128)
@@ -511,6 +579,9 @@ def main():
     mine = load_user_midi(args.my_midi, mixes, rng)
     if mine:
         perfs += mine; sources.append(f"{len(mine)} of your MIDI files")
+    tabs = load_tabs(args.my_tabs, mixes, rng)
+    if tabs:
+        perfs += tabs; sources.append(f"{len(tabs)} drum tabs")
     if not perfs:
         sys.exit("no training data")
     source = " + ".join(sources)
@@ -531,10 +602,10 @@ def main():
     for ep in range(args.epochs):
         model.train()
         tl, n = 0.0, 0
-        for x, y, m in batches(perfs, tr, args.window, args.batch, rng, True):
-            x, y, m = map(torch.from_numpy, (x, y, m))
+        for x, y, m, w in batches(perfs, tr, args.window, args.batch, rng, True):
+            x, y, m, w = map(torch.from_numpy, (x, y, m, w))
             pred, _ = model(x)
-            loss, _ = loss_fn(pred, y, m, pos_weight)
+            loss, _ = loss_fn(pred, y, m, pos_weight, w)
             opt.zero_grad(); loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             opt.step()
@@ -543,10 +614,10 @@ def main():
         model.eval()
         vl, vn, parts = 0.0, 0, np.zeros(3)
         with torch.no_grad():
-            for x, y, m in batches(perfs, va, args.window, 256, np.random.default_rng(0), False):
-                x, y, m = map(torch.from_numpy, (x, y, m))
+            for x, y, m, w in batches(perfs, va, args.window, 256, np.random.default_rng(0), False):
+                x, y, m, w = map(torch.from_numpy, (x, y, m, w))
                 pred, _ = model(x)
-                l, pr = loss_fn(pred, y, m, pos_weight)
+                l, pr = loss_fn(pred, y, m, pos_weight, w)
                 vl += l.item(); vn += 1; parts += pr
         vl /= max(1, vn); parts /= max(1, vn)
         print(f"epoch {ep + 1:3d}/{args.epochs}  train {tl / max(1, n):.4f}  val {vl:.4f}  (hit {parts[0]:.3f} vel {parts[1]:.4f} timing {parts[2]:.4f})  {time.time() - t0:.0f}s", flush=True)
@@ -562,7 +633,7 @@ def main():
     state = {k: v.numpy().astype(np.float64) for k, v in best_state.items()}
     # reference vectors: a validation window, fresh state, step by step
     pi, s = (va or tr)[0]
-    x, _, _ = make_inputs(perfs[pi], s, 24, np.random.default_rng(1), False)
+    x, _, _, _ = make_inputs(perfs[pi], s, 24, np.random.default_rng(1), False)
     with torch.no_grad():
         y, _ = model(torch.from_numpy(x)[None])
     test_out = y[0].numpy()

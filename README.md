@@ -15,7 +15,7 @@ The Hammer is a drummer that **listens to your track** and plays along like a re
 |---|---|
 | **Ears** | Splits your music into LOW (kick/bass), MID (snare/guitars/keys) and HIGH (hats/cymbals/picking), detects accents in each, tracks energy per bar and spots section changes. |
 | **Listening brain** | A hand-written *playbook* of grooves per style (5 intensity levels each, from verse brushes to blast beats). It bends them toward what the Ears hear: kicks lock to the bass, snare and crash catch band stabs, hats follow the subdivision. Repeating bars are predicted from 1, 2, 4 and 8 bars back. |
-| **Neural brain** | A 2-layer GRU network trained on three sources: the **Groove MIDI Dataset** (13.6 h of pro drummers, for human feel), bars from The Hammer's own **Playbook** (for metal, orchestral, cajón, minimal and the other styles the dataset lacks), and **your own MIDI** in `training/my_midi`. It generates one 16th at a time, conditioned on style, intensity, what the Ears hear, bar position and fill mode, and keeps a memory of what it just played. Pure C++, uses under 1 ms per bar. |
+| **Neural brain** | A 2-layer GRU network trained on four sources: the **Groove MIDI Dataset** (13.6 h of pro drummers, for human feel), bars from The Hammer's own **Playbook** (for metal, orchestral, cajón, minimal and the other styles the dataset lacks), **your own MIDI** in `training/my_midi`, and **drum tabs** in `training/my_tabs` (for note choice only). It generates one 16th at a time, conditioned on style, intensity, what the Ears hear, bar position and fill mode, and keeps a memory of what it just played. Pure C++, uses under 1 ms per bar. |
 | **Conductor** | Plans phrases (fills at 4/8/16-bar ends, solo spots), blends both brains with the **BRAIN** fader, adds crashes after fills and section changes, and enforces **two hands + two feet** at human speeds. Then it humanises timing and velocity with each style's feel (laid-back snare in Groove, pushed hats in punk, tight triggers in death metal). |
 
 ### The controls you asked for
@@ -80,6 +80,9 @@ Until step 2 has run, the Neural side uses a stand-in "Playbook improviser", and
 
 ### Teaching it your own grooves
 Drop MIDI drum files into `training/my_midi/<style>/`, for example `training/my_midi/metalcore/breakdown_ideas.mid` (General MIDI drum notes, 4/4). Commit them and run **"Train the neural brain"** again. Your files count four times as much as the dataset, so the drummer picks up your habits. Good sources: your own e-kit recordings, parts you've programmed, or transcriptions of your own recordings. Avoid ripping other people's performances from videos. Name a file with "fill" in it (`fill_tomrun.mid`) and it trains the fill mode.
+
+### Teaching it from drum tab
+Ordinary text drum tab works too. Put `.txt` files in `training/my_tabs/<style>/` (cheat sheet: `training/my_tabs/README.txt`). Tabs teach the brain **which notes** to play. The **feel** (micro-timing, dynamics) is learned only from real drummers, so tab-trained grooves still sound human. Check a tab was read correctly with `python training/tab_reader.py <file> --midi check.mid`. The Funky Drummer break is included as the first example.
 
 Local build: `cmake -B build && cmake --build build --config Release`. Engine self-test: `HammerRender --selftest`. Demo renders: `HammerRender --render demos`.
 

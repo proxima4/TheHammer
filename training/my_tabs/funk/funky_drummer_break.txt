@@ -1,0 +1,38 @@
+title: The Funky Drummer break (groove by Clyde Stubblefield, James Brown "Funky Drummer", 1970)
+style: funk
+tempo: 96
+
+Written out from a 22-bar transcription of the break. Ghost notes = g, accents = O,
+open hi-hat = o, snare buzz/roll = b (B accented).
+
+Bars 1-7: the main groove
+       1e+a2e+a3e+a4e+a
+HH  |xxxxxoxxxxxxxoxx|
+SN  |----O--g-g-gO--g|
+B   |o-o-------o--o--|  x7
+
+Bar 8: crash on the one
+CC  |X---------------|
+HH  |-xxxxoxxxxxxxoxx|
+SN  |----O--g-g-gO--g|
+B   |o-o-------o--o--|
+
+Bars 9-13: main groove again
+HH  |xxxxxoxxxxxxxoxx|
+SN  |----O--g-g-gO--g|
+B   |o-o-------o--o--|  x5
+
+Bars 14-19: hi-hat stays closed on beat 4, snare buzzes on 4
+HH  |xxxxxoxxxxxxxxxx|
+SN  |----O--g-g-gb--g|
+B   |o-o-------o--o--|  x6
+
+Bars 20-21: main groove
+HH  |xxxxxoxxxxxxxoxx|
+SN  |----O--g-g-gO--g|
+B   |o-o-------o--o--|  x2
+
+Bar 22: ending
+HH  |xxxxxxxxxxxxx---|
+SN  |----B---B---O---|
+B   |o-o-------o-----|

@@ -9,6 +9,10 @@ namespace hammer
 struct VersionEntry { const char* version; const char* date; const char* notes; };
 
 inline constexpr VersionEntry kVersionHistory[] = {
+    { "0.1.2", "2026-11-10",
+      "The neural brain can now learn from drum tab (training/my_tabs): tabs teach which notes to play, "
+      "real drummers teach the feel. Tab reader handles accents, ghosts, open hats, flams, rolls, triplets "
+      "and repeats. First tab: the Funky Drummer break. Playbook bars now teach mostly note choice." },
     { "0.1.1", "2026-11-10",
       "Stop in a playing track now silences everything within 50 ms (voices, room reverb, MIDI out); "
       "loading a project silences the old one; live hits while FL is stopped still ring out. "
