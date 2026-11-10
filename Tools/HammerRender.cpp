@@ -85,7 +85,8 @@ static RenderResult renderStyle (int style, double bpm, int barsTotal, bool with
                                  const juce::File* midOut, int kitOverride = -1, float follow = 0.6f, const juce::File* sampleKit = nullptr)
 {
     const double sr = 44100.0; const int block = 256;
-    HammerEngine eng (HammerEngine::Mode::Tool);
+    auto engPtr = std::make_unique<HammerEngine> (HammerEngine::Mode::Tool); // heap: Windows stacks are only 1 MB
+    auto& eng = *engPtr;
     eng.prepare (sr, block);
     if (sampleKit != nullptr)
     {
@@ -158,7 +159,7 @@ static int selfTest()
 
     std::printf ("== Neural brain\n");
     {
-        NeuralEngine ne; ne.loadDefault();
+        auto nePtr = std::make_unique<NeuralEngine>(); auto& ne = *nePtr; ne.loadDefault();
         std::printf ("    %s\n", ne.status().c_str());
         if (ne.hasModel())
         {
@@ -188,7 +189,8 @@ static int selfTest()
     std::printf ("== Stop behaviour (APT standard: Stop silences everything)\n");
     {
         const double sr = 44100.0; const int block = 256;
-        HammerEngine eng (HammerEngine::Mode::Drummer);
+        auto engPtr = std::make_unique<HammerEngine> (HammerEngine::Mode::Drummer);
+        auto& eng = *engPtr;
         eng.prepare (sr, block);
         EngineSettings s; s.style = Rock; s.intensity = 0.9f; s.aggression = 0.9f;
         SoundSettings snd; snd.room = 1.f; snd.roomSize = 1.f;
@@ -316,8 +318,10 @@ static int exportPlaybook (const juce::File& dir, float scale)
         int written = 0, sessions = 0, events = 0;
         while (written < totalBars)
         {
-            Conductor c;               // fresh drummer per session (no neural: pure playbook)
-            ListeningState ls;          // nothing heard: the training script derives listening features itself
+            auto cPtr = std::make_unique<Conductor>(); // fresh drummer per session (no neural: pure playbook)
+            auto& c = *cPtr;
+            auto lsPtr = std::make_unique<ListeningState>();
+            auto& ls = *lsPtr;          // nothing heard: the training script derives listening features itself
             EngineSettings es;
             es.style = style; es.brain = 0.f; es.follow = 0.f;
             es.intensity = rng.range (0.08f, 1.f);
@@ -371,12 +375,13 @@ static int exportPlaybook (const juce::File& dir, float scale)
 
 int main (int argc, char** argv)
 {
+    std::setvbuf (stdout, nullptr, _IONBF, 0); // show progress even if something crashes (CI logs)
     juce::ScopedJuceInitialiser_GUI init; // message manager for JUCE helpers
     if (argc >= 2 && std::strcmp (argv[1], "--selftest") == 0) return selfTest();
     if (argc >= 3 && std::strcmp (argv[1], "--render") == 0) return renderDemos (juce::File::getCurrentWorkingDirectory().getChildFile (argv[2]));
     if (argc >= 3 && std::strcmp (argv[1], "--brain") == 0)
     {
-        NeuralEngine ne;
+        auto nePtr = std::make_unique<NeuralEngine>(); auto& ne = *nePtr;
         const bool ok = ne.loadFile (juce::File::getCurrentWorkingDirectory().getChildFile (argv[2]).getFullPathName().toStdString());
         std::printf ("%s\nself-test max error: %g\n", ne.status().c_str(), ne.lastSelfTestError);
         return ok && ne.lastSelfTestError >= 0.f && ne.lastSelfTestError < 1e-3f ? 0 : 1;

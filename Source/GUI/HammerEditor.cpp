@@ -1,5 +1,6 @@
 #include "HammerEditor.h"
 #include "../Brain/StyleLibrary.h"
+#include "../Common/VersionHistory.h"
 
 namespace hammer
 {
@@ -353,7 +354,10 @@ private:
           << "  Free kit pack: DrumGizmo DRSKit & MuldjordKit (CC BY 4.0, DrumGizmo team / DRS Drums / Lars\n"
           << "    Muldjord), Big Rusty Drums (Karoryfer Samples, CC0), VSCO 2 Community Edition & VCSL\n"
           << "    (Versilian Studios, CC0).\n"
-          << "  Built with JUCE.  The Hammer is a non-commercial APT Industrial project.\n";
+          << "  Built with JUCE.  The Hammer is a non-commercial APT Industrial project.\n\n";
+        s << "VERSION HISTORY\n";
+        for (const auto& v : kVersionHistory)
+            s << "  v" << v.version << "  (" << v.date << ")\n    " << v.notes << "\n";
         return s;
     }
     HammerPluginBase& proc;
@@ -402,8 +406,9 @@ public:
         rc::drawStencilText (g, "THE HAMMER", { 40, 26, 420, 56 }, 54.f, rc::stencil);
         g.setFont (rc::stencilFont (14.f));
         g.setColour (rc::amber);
-        g.drawText (proc.isMixerMode() ? "INTELLIGENT SESSION DRUMMER  -  MIXER FX" : "INTELLIGENT SESSION DRUMMER",
-                    44, 78, 400, 18, juce::Justification::centredLeft);
+        g.drawText (juce::String (proc.isMixerMode() ? "INTELLIGENT SESSION DRUMMER  -  MIXER FX" : "INTELLIGENT SESSION DRUMMER")
+                        + "   V" + HAMMER_VERSION_STRING,
+                    44, 78, 420, 18, juce::Justification::centredLeft);
         // decals
         g.setColour (rc::markerRed.withAlpha (0.55f));
         g.setFont (rc::stencilFont (12.f));
