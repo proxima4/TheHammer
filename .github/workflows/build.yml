@@ -113,8 +113,8 @@ jobs:
           foreach ($b in $bundles) {
             Write-Host "=== Testing $($b.Name)"
             # pluginval is a windowed program: start it and WAIT for its real exit code
-            $args = "--strictness-level 5 --skip-gui-tests --timeout-ms 300000 --output-dir pluginval-logs --validate `"$($b.FullName)`""
-            $p = Start-Process -FilePath .\pluginval\pluginval.exe -ArgumentList $args -NoNewWindow -Wait -PassThru
+            $pvArgs = "--strictness-level 5 --skip-gui-tests --timeout-ms 300000 --output-dir pluginval-logs --validate `"$($b.FullName)`""
+            $p = Start-Process -FilePath .\pluginval\pluginval.exe -ArgumentList $pvArgs -NoNewWindow -Wait -PassThru
             if ($p.ExitCode -ne 0) { Write-Host "::error::$($b.Name) FAILED pluginval (exit $($p.ExitCode))"; $failed++ } else { Write-Host "$($b.Name) PASSED pluginval" }
           }
           if ($failed -gt 0) { exit 1 }
