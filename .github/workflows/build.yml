@@ -73,10 +73,11 @@ jobs:
           path: demos
 
   # ---------------------------------------------------------------------------
-  # Version control: every NEW version number publishes a GitHub Release with
-  # the build attached.  Bump VERSION in CMakeLists.txt, push to main, and
-  # Release vX.Y.Z appears (notes come from CHANGELOG.md).  The APT Industrial
-  # updater on your PC installs the newest Release for FL Studio automatically.
+  # Version control: every NEW version number that passes the tests is published
+  # as a TEST VERSION (GitHub pre-release) with the build attached; notes come
+  # from CHANGELOG.md.  The owner tries it ("Try Test Versions" in the updater)
+  # and approves it ("Approve Tested Versions"); only approved versions reach
+  # the automatic updates.
   # ---------------------------------------------------------------------------
   # ---------------------------------------------------------------------------
   # Quality gate: nothing is published until the plugin passes pluginval (the
@@ -174,4 +175,6 @@ jobs:
             awk -v v="$VER" '/^## /{ if (p) exit; if (index($0, v)) { p = 1; next } } p' CHANGELOG.md > notes.md
           fi
           [ -s notes.md ] || git log -1 --format=%B "$GITHUB_SHA" > notes.md
-          gh release create "v$VER" upload/*.zip -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$NAME v$VER" --notes-file notes.md
+          # published as a TEST VERSION (pre-release): the owner tries it, then approves it with the
+          # updater's "Approve Tested Versions" button. Automatic updates only install approved versions.
+          gh release create "v$VER" upload/*.zip -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$NAME v$VER" --notes-file notes.md --prerelease
