@@ -78,9 +78,56 @@ jobs:
   # Release vX.Y.Z appears (notes come from CHANGELOG.md).  The APT Industrial
   # updater on your PC installs the newest Release for FL Studio automatically.
   # ---------------------------------------------------------------------------
+  # ---------------------------------------------------------------------------
+  # Quality gate: nothing is published until the plugin passes pluginval (the
+  # standard plugin test tool, including Steinberg's VST3 validator). It loads
+  # the plugin like a DAW, plays audio at many sample rates and block sizes,
+  # moves every parameter and saves/restores state.  Fail = no Release, and
+  # the updater keeps everyone on the last good version.
+  # ---------------------------------------------------------------------------
+  test:
+    name: Test the plugin before release (pluginval)
+    needs: windows
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+    steps:
+      - name: Get the Windows build
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-Windows'
+          path: dist
+
+      - name: Get pluginval 1.0.4
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_Windows.zip -OutFile pluginval.zip
+          Expand-Archive pluginval.zip -DestinationPath pluginval
+
+      - name: Test every plugin in the build
+        shell: pwsh
+        run: |
+          $bundles = @(Get-ChildItem dist -Recurse -Directory -Filter *.vst3 | Where-Object { $_.Parent.Name -notlike '*.vst3' })
+          if ($bundles.Count -eq 0) { throw 'The build contains no .vst3 plugin' }
+          New-Item -ItemType Directory -Force -Path pluginval-logs | Out-Null
+          $failed = 0
+          foreach ($b in $bundles) {
+            Write-Host "=== Testing $($b.Name)"
+            & .\pluginval\pluginval.exe --strictness-level 5 --skip-gui-tests --timeout-ms 300000 --output-dir pluginval-logs --validate "$($b.FullName)"
+            if ($LASTEXITCODE -ne 0) { Write-Host "::error::$($b.Name) FAILED pluginval"; $failed++ } else { Write-Host "$($b.Name) passed" }
+          }
+          if ($failed -gt 0) { exit 1 }
+
+      - name: Keep the test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pluginval-report
+          path: pluginval-logs
+          retention-days: 30
+
   release:
     name: Publish this version as a GitHub Release
-    needs: windows
+    needs: [windows, test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:

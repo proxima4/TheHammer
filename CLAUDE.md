@@ -8,3 +8,6 @@
 ## Owner's plugin standards
 - Stop in FL Studio (or any DAW) while the song plays = silence (fade, then hard stop, tails included). Playing live with the transport stopped lets tails ring. See `Source/HostStop.h`.
 - The owner is not a programmer: explain things in plain, step-by-step words.
+
+## Quality gate
+A Release is published only after the build passes pluginval (strictness 5, includes Steinberg's VST3 validator) on Windows. If it fails, nothing is published and the owner's updater keeps the last good version. Never bypass this; fix the plugin instead. Test locally first where possible (pluginval Linux build works on the Linux VST3).
