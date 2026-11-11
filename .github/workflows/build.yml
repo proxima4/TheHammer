@@ -71,3 +71,58 @@ jobs:
         with:
           name: TheHammer-demo-renders
           path: demos
+
+  # ---------------------------------------------------------------------------
+  # Version control: every NEW version number publishes a GitHub Release with
+  # the build attached.  Bump VERSION in CMakeLists.txt, push to main, and
+  # Release vX.Y.Z appears (notes come from CHANGELOG.md).  The APT Industrial
+  # updater on your PC installs the newest Release for FL Studio automatically.
+  # ---------------------------------------------------------------------------
+  release:
+    name: Publish this version as a GitHub Release
+    needs: windows
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Is this a new version?
+        id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          line=$(grep -m1 -oE 'project\([A-Za-z0-9_]+ +VERSION +[0-9]+(\.[0-9]+)+' CMakeLists.txt)
+          name=$(echo "$line" | sed -E 's/project\(([A-Za-z0-9_]+).*/\1/')
+          ver=$(echo "$line" | grep -oE '[0-9]+(\.[0-9]+)+$')
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+          if gh release view "v$ver" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "new=false" >> "$GITHUB_OUTPUT"; echo "v$ver is already released - nothing to do."
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"; echo "Publishing v$ver."
+          fi
+
+      - name: Get the Windows build
+        if: steps.v.outputs.new == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-Windows'
+          path: dist
+
+      - name: Publish the Release
+        if: steps.v.outputs.new == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VER: ${{ steps.v.outputs.version }}
+          NAME: ${{ steps.v.outputs.name }}
+        run: |
+          mkdir -p upload
+          for d in dist/*/; do n=$(basename "$d"); (cd "$d" && zip -qr "$GITHUB_WORKSPACE/upload/${n}-v${VER}.zip" .); done
+          ls -la upload
+          if [ -f CHANGELOG.md ]; then
+            awk -v v="$VER" '/^## /{ if (p) exit; if (index($0, v)) { p = 1; next } } p' CHANGELOG.md > notes.md
+          fi
+          [ -s notes.md ] || git log -1 --format=%B "$GITHUB_SHA" > notes.md
+          gh release create "v$VER" upload/*.zip -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$NAME v$VER" --notes-file notes.md
